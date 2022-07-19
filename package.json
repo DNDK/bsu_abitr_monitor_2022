@@ -1,0 +1,28 @@
+{
+  "name": "abitmonitor_bot",
+  "version": "1.0.0",
+  "description": "",
+  "main": "app.js",
+  "scripts": {
+    "dev": "nodemon app.js"
+  },
+  "keywords": [
+    "bot",
+    "bsu",
+    "abiturient"
+  ],
+  "author": "DNDK",
+  "license": "ISC",
+  "dependencies": {
+    "axios": "^0.27.2",
+    "dom-parser": "^0.1.6",
+    "dotenv": "^16.0.1",
+    "jsdom": "^20.0.0",
+    "mongoose": "^6.4.4",
+    "node-html-parser": "^5.3.3",
+    "node-schedule": "^2.1.0",
+    "node-telegram-bot-api": "^0.58.0",
+    "nodemon": "^2.0.19",
+    "sqlite3": "^5.0.9"
+  }
+}
