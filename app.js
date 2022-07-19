@@ -22,60 +22,65 @@ const token = process.env.BOT_TOKEN;
 const bot = new TelegramBot(token, {polling: true});
 
 async function briefReport(abit){
-    console.log(abit.score);
-    const res = await axios.get("https://abit.bsu.by/formk1?id=1");
-    const html = res.data;
+    if(new Date().getHours() >6 && new Date().getHours < 22){
+        console.log(abit.score);
+        const res = await axios.get("https://abit.bsu.by/formk1?id=1");
+        const html = res.data;
 
-    const root = parse(html);
-    const table = root.querySelector("#Abit_K11_TableResults");
+        const root = parse(html);
+        const table = root.querySelector("#Abit_K11_TableResults");
 
-    const rows = table.querySelectorAll("tr");
-    const spec = rows.find(row => row.innerText.includes(abit.spec));
-    let spec_cells = spec.querySelectorAll("td");
+        const rows = table.querySelectorAll("tr");
+        const spec = rows.find(row => row.innerText.includes(abit.spec));
+        let spec_cells = spec.querySelectorAll("td");
 
-    let spec_places = parseInt(spec_cells[1].innerText) || 0;
-    
-    spec_cells.splice(0, 8);
+        let spec_places = parseInt(spec_cells[1].innerText) || 0;
+        
+        spec_cells.splice(0, 8);
 
-    for(let i = 0; i<spec_cells.length; i++){
-        spec_cells[i] = parseInt(spec_cells[i].innerText) || 0;
-    }
-    
-    let behind=0;
-
-    const rprt = {};
-
-    for(let i = 0; i< sc_fields.length; i++){
-        let spl = sc_fields[i].split(" - ");
-        let n_spl = [parseInt(spl[0]), parseInt(spl[1]) || parseInt(spl[0])];
-        if(abit.score <= n_spl[1] || (abit.score <= n_spl[0] && abit.score >= n_spl[1])){
-            if(spec_cells[i] !== 0){
-                behind+=spec_cells[i];
-                rprt[sc_fields[i]] = spec_cells[i];
-            } 
+        for(let i = 0; i<spec_cells.length; i++){
+            spec_cells[i] = parseInt(spec_cells[i].innerText) || 0;
         }
-    }
-    
-    let message = `Сейчас выше вас, или на вашем уровне ${behind} человек.\nИз них:\n`;
+        
+        let behind=0;
 
-    Object.keys(rprt).map(k => {
-        message+= `${rprt[k]} человек с баллом в дипазоне ${k},\n`
-    })
+        const rprt = {};
 
-    if(behind <= spec_places){
-        message+=`На данный момент вы проходите! 😃`;
+        for(let i = 0; i< sc_fields.length; i++){
+            let spl = sc_fields[i].split(" - ");
+            let n_spl = [parseInt(spl[0]), parseInt(spl[1]) || parseInt(spl[0])];
+            if(abit.score <= n_spl[1] || (abit.score <= n_spl[0] && abit.score >= n_spl[1])){
+                if(spec_cells[i] !== 0){
+                    behind+=spec_cells[i];
+                    rprt[sc_fields[i]] = spec_cells[i];
+                } 
+            }
+        }
+        
+        let message = `Сейчас выше вас, или на вашем уровне ${behind} человек.\nИз них:\n`;
+
+        Object.keys(rprt).map(k => {
+            message+= `${rprt[k]} человек с баллом в дипазоне ${k},\n`
+        })
+
+        if(behind <= spec_places){
+            message+=`На данный момент вы проходите! 😃`;
+        }
+        else{
+            message += `Увы, но вы не проходите 😔`
+        }
+
+        message += `\n(Число мест - ${spec_places})`
+
+        bot.sendMessage(abit.chat_id, message);
     }
     else{
-        message += `Увы, но вы не проходите 😔`
+        bot.sendMessage(abit.chat_id, "На сегодня мониторинг закончился");
     }
-
-    message += `\n(Число мест - ${spec_places})`
-
-    bot.sendMessage(abit.chat_id, message);
 
 }
 
-const job = schedule.scheduleJob("*/30 * * * *",() => {
+const job = schedule.scheduleJob("*/30 8-22 * * *",() => {
     Abit.find({notificate: true}).exec((err, abits) => {
         if(err){
             console.error(err);
@@ -89,40 +94,45 @@ const job = schedule.scheduleJob("*/30 * * * *",() => {
 })
 
 async function sendReport(abitr){
-    const res = await axios.get("https://abit.bsu.by/formk1?id=1");
-    const html = res.data;
+    if(new Date().getHours() > 6 && new Date().getHours() < 22){
+        const res = await axios.get("https://abit.bsu.by/formk1?id=1");
+        const html = res.data;
 
-    const root = parse(html);
-    const table = root.querySelector("#Abit_K11_TableResults");
+        const root = parse(html);
+        const table = root.querySelector("#Abit_K11_TableResults");
 
-    const rows = table.querySelectorAll("tr");
-    const kb = rows.find(row => row.innerText.includes(abitr.spec));
-    const kb_cells = kb.querySelectorAll("td");
-    const fields = require("./arrays").fmt_fields;
-    const values = [];
-    for(let i of kb_cells){
-        values.push(i.innerText.length? i.innerText : '-');
+        const rows = table.querySelectorAll("tr");
+        const kb = rows.find(row => row.innerText.includes(abitr.spec));
+        const kb_cells = kb.querySelectorAll("td");
+        const fields = require("./arrays").fmt_fields;
+        const values = [];
+        for(let i of kb_cells){
+            values.push(i.innerText.length? i.innerText : '-');
+        }
+        values.splice(0,1);
+
+        const fmt = {};
+
+        let message = ``;
+
+
+        for(let i = 0; i<fields.length; i++){
+            let vl = values[i].length ? values[i] : '-'
+            fmt[fields[i]] = vl;
+
+            message+=`${fields[i]}: ${values[i]}\n`;
+        }
+
+        bot.sendMessage(abitr.chat_id, message);
+    }else{
+        bot.sendMessage(abitr.chat_id, "На сегодня мониторинг закончился");
     }
-    values.splice(0,1);
-
-    const fmt = {};
-
-    let message = ``;
-
-
-    for(let i = 0; i<fields.length; i++){
-        let vl = values[i].length ? values[i] : '-'
-        fmt[fields[i]] = vl;
-
-        message+=`${fields[i]}: ${values[i]}\n`;
-    }
-
-    bot.sendMessage(abitr.chat_id, message);
 
 }
 
 
 let abits_forms = [];
+const spec_change = [];
 
 bot.on("message", async (msg) => {
     const chat_id = msg.chat.id;
@@ -143,6 +153,9 @@ bot.on("message", async (msg) => {
                             keyboard: require("./arrays").keyboard
                         }
                     })
+                }
+                else{
+                    bot.sendMessage(chat_id, "Я и так запущен");
                 }
 
             });
@@ -178,6 +191,15 @@ bot.on("message", async (msg) => {
                 sendReport(abit);
             })
         }
+        else if(msg.text === "/change_spec"){
+            spec_change.push(chat_id);
+            bot.sendMessage(chat_id, "Выбери новую специальность", {
+            reply_markup: {
+                one_time_keyboard: true,
+                keyboard: require("./arrays").keyboard
+            }
+            });
+        }
     }
     else{
         console.log(abits_forms)
@@ -205,10 +227,36 @@ bot.on("message", async (msg) => {
                     let abit = new Abit(abits_forms[index]);
     
                     abit.save().then(a => {
+                        let ind = abits_forms.findIndex(b => b.chat_id === a.chat_id);
+                        abits_forms.splice(ind, 1);
                         bot.sendMessage(a.chat_id, "Отлично, теперь вы будуте получать краткие отчеты");
                     })
 
                 }
+            }
+        }
+
+        if(spec_change.includes(chat_id)){
+            let opts = [];
+            require("./arrays").keyboard.map(k => {
+                opts.push(k[0]);
+            });
+
+            if(opts.includes(msg.text)){
+                Abit.findOneAndUpdate({chat_id}, {spec: msg.text}).exec((err, abit) => {
+                    if(err){
+                        console.error(err);
+                        bot.sendMessage(chat_id, "Ошибка");
+                        return;
+                    }
+                    let ind = spec_change.findIndex(b => b.chat_id === a.chat_id);
+                    spec_change.splice(ind, 1);
+                    bot.sendMessage(chat_id, `Теперь твоя специальность - ${abit.spec}`);
+                });
+            }
+
+            else{
+                bot.sendMessage(chat_id, "Некорректный ввод");
             }
         }
     }
