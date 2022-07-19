@@ -5,7 +5,6 @@ const schedule = require("node-schedule");
 let fields = require("./arrays").fmt_fields;
 const sc_fields = require("./arrays").scores_fields;
 require("dotenv").config();
-//eLgEY0r6YnX7LAHg
 
 const mongoDB = process.env.MONGO_URI;
 mongoose.connect(mongoDB, { useNewUrlParser: true, useUnifiedTopology: true });
