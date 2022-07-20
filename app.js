@@ -119,7 +119,6 @@ async function sendReport(abitr){
         bot.sendMessage(abitr.chat_id, message);
     }
 
-}
 
 
 let abits_forms = [];
