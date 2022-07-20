@@ -202,7 +202,9 @@ bot.on("message", async (msg) => {
                 let index = abits_forms.findIndex(a => a.chat_id === chat_id);
                 let spec = msg.text;
                 abits_forms[index].spec = spec;
-                bot.sendMessage(chat_id, "Отлично, теперь скажи свой балл");
+                bot.sendMessage(chat_id, "Отлично, теперь скажи свой балл", {reply_markup: {
+                    remove_keyboard: true
+                }});
             }
 
             else if(!abits_forms.find(a => a.chat_id === chat_id).score){
