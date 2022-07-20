@@ -88,7 +88,6 @@ const job = schedule.scheduleJob("*/30 8-22 * * *",() => {
 })
 
 async function sendReport(abitr){
-    if(new Date().getHours() > 6 && new Date().getHours() < 22){
         const res = await axios.get("https://abit.bsu.by/formk1?id=1");
         const html = res.data;
 
@@ -118,8 +117,6 @@ async function sendReport(abitr){
         }
 
         bot.sendMessage(abitr.chat_id, message);
-    }else{
-        bot.sendMessage(abitr.chat_id, "На сегодня мониторинг закончился");
     }
 
 }
