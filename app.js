@@ -22,62 +22,56 @@ const token = process.env.BOT_TOKEN;
 const bot = new TelegramBot(token, {polling: true});
 
 async function briefReport(abit){
-    if(new Date().getHours() >6 && new Date().getHours < 22){
-        console.log(abit.score);
-        const res = await axios.get("https://abit.bsu.by/formk1?id=1");
-        const html = res.data;
+    console.log(abit.score);
+    const res = await axios.get("https://abit.bsu.by/formk1?id=1");
+    const html = res.data;
 
-        const root = parse(html);
-        const table = root.querySelector("#Abit_K11_TableResults");
+    const root = parse(html);
+    const table = root.querySelector("#Abit_K11_TableResults");
 
-        const rows = table.querySelectorAll("tr");
-        const spec = rows.find(row => row.innerText.includes(abit.spec));
-        let spec_cells = spec.querySelectorAll("td");
+    const rows = table.querySelectorAll("tr");
+    const spec = rows.find(row => row.innerText.includes(abit.spec));
+    let spec_cells = spec.querySelectorAll("td");
 
-        let spec_places = parseInt(spec_cells[1].innerText) || 0;
+    let spec_places = parseInt(spec_cells[1].innerText) || 0;
         
-        spec_cells.splice(0, 8);
+    spec_cells.splice(0, 8);
 
-        for(let i = 0; i<spec_cells.length; i++){
-            spec_cells[i] = parseInt(spec_cells[i].innerText) || 0;
-        }
+    for(let i = 0; i<spec_cells.length; i++){
+        spec_cells[i] = parseInt(spec_cells[i].innerText) || 0;
+    }
         
-        let behind=0;
+    let behind=0;
 
-        const rprt = {};
+    const rprt = {};
 
-        for(let i = 0; i< sc_fields.length; i++){
-            let spl = sc_fields[i].split(" - ");
-            let n_spl = [parseInt(spl[0]), parseInt(spl[1]) || parseInt(spl[0])];
-            if(abit.score <= n_spl[1] || (abit.score <= n_spl[0] && abit.score >= n_spl[1])){
-                if(spec_cells[i] !== 0){
-                    behind+=spec_cells[i];
-                    rprt[sc_fields[i]] = spec_cells[i];
-                } 
-            }
+    for(let i = 0; i< sc_fields.length; i++){
+        let spl = sc_fields[i].split(" - ");
+        let n_spl = [parseInt(spl[0]), parseInt(spl[1]) || parseInt(spl[0])];
+        if(abit.score <= n_spl[1] || (abit.score <= n_spl[0] && abit.score >= n_spl[1])){
+            if(spec_cells[i] !== 0){
+                behind+=spec_cells[i];
+                rprt[sc_fields[i]] = spec_cells[i];
+            } 
         }
+    }
         
-        let message = `Сейчас выше вас, или на вашем уровне ${behind} человек.\nИз них:\n`;
+    let message = `Сейчас выше вас, или на вашем уровне ${behind} человек.\nИз них:\n`;
 
-        Object.keys(rprt).map(k => {
-            message+= `${rprt[k]} человек с баллом в дипазоне ${k},\n`
-        })
+    Object.keys(rprt).map(k => {
+        message+= `${rprt[k]} человек с баллом в дипазоне ${k},\n`
+    })
 
-        if(behind <= spec_places){
-            message+=`На данный момент вы проходите! 😃`;
-        }
-        else{
-            message += `Увы, но вы не проходите 😔`
-        }
-
-        message += `\n(Число мест - ${spec_places})`
-
-        bot.sendMessage(abit.chat_id, message);
+    if(behind <= spec_places){
+        message+=`На данный момент вы проходите! 😃`;
     }
     else{
-        bot.sendMessage(abit.chat_id, "На сегодня мониторинг закончился");
+        message += `Увы, но вы не проходите 😔`
     }
 
+    message += `\n(Число мест - ${spec_places})`
+
+    bot.sendMessage(abit.chat_id, message);
 }
 
 const job = schedule.scheduleJob("*/30 8-22 * * *",() => {
@@ -251,7 +245,11 @@ bot.on("message", async (msg) => {
                     }
                     let ind = spec_change.findIndex(b => b.chat_id === a.chat_id);
                     spec_change.splice(ind, 1);
-                    bot.sendMessage(chat_id, `Теперь твоя специальность - ${abit.spec}`);
+                    bot.sendMessage(chat_id, `Теперь твоя специальность - ${abit.spec}`, {
+                        reply_markup: {
+                            remove_keyboard: true
+                        }
+                    });
                 });
             }
 
